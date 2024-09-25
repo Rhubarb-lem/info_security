@@ -86,7 +86,7 @@ long long int fastExp(long long int base, long long int exp, long long int mod)
             break;
         if ((exp >> i) & 1)
         {
-            res *= remain % mod;
+            res *= remain ;
         }
 
         remain_prev = remain;
@@ -124,7 +124,7 @@ long long int genEuclid(long long int a, long long int b)
 
     while (T[0] != 0)
     {
-       
+
         u[0] = v[0];
         u[1] = v[1];
         u[2] = v[2];
@@ -139,10 +139,9 @@ long long int genEuclid(long long int a, long long int b)
         T[0] = u[0] - q * v[0];
         T[1] = u[1] - q * v[1];
         T[2] = u[2] - q * v[2];
-
     }
     // printf("%d\n", T[0]);
-    // printf("%d\n", a * T[1] + b * T[2]);
+     printf("%lld  %lld\n",  T[1] , T[2]);
     return T[0];
 }
 long long int getRand(unsigned int order)
@@ -175,7 +174,7 @@ long long int getPrimeRand()
     long int flag = 0;
     while (flag == 0)
     {
-        randP = getRand(1000);
+        randP = getRand(1000000);
         flag = FermaCheck(randP);
     }
     return randP;
@@ -204,7 +203,7 @@ long long int getMyOpenKey(long long int p, long long int g, long long int mysec
         printf("Error: wrong system parametrs!\n");
         return -1;
     }
-
+    printf("key - %lld, g - %lld, p %lld", mysecretKey, p, g);
     long long int myopenKey = fastExp(g, mysecretKey, p);
     return myopenKey;
 }
@@ -217,7 +216,6 @@ long long int getSharSecKey(long long int p, long long int openKey, long long in
     }
 
     long long int Zab = fastExp(openKey, mysecretKey, p);
-
 
     return Zab;
 }
@@ -250,38 +248,50 @@ long long int genDiffieHellman(long long int p, long long int g, long long int X
     return Zab;
 }
 
-
-long long int babygiantStep(int a, int p, int y)
+long long int babygiantStep(long long int a, long long int p, long long int y )
 {
 
-    long long int m, k = sqrt(p)+1;
+    long long int m, k = sqrt(p) + 1;
     m = k;
-    printf("K:%lld", k);
     long long int A[m], B[k];
-    for (int i = 0; i < k; i++)
+    for (int i = 1; i < k; i++)
     {
-        A[i] = (y * fastExp(a, i, p)) % p;
-        B[i] = fastExp(a, m*(i + 1), p);
+        A[i] = (y % p * fastExp(a, i, p)) % p;
+        B[i] = fastExp(a, m * (i), p);  
     }
     int i = 0, j = 0;
     bst *tree = bstree_create(A[i], i);
 
-    for (i = 0; i < m; ++i){
+    for (i = 0; i < m; ++i)
+    {
         bstree_add(tree, A[i], i);
-        printf("A %lld\n", A[i]);
-        }
-    
-    for (j = 0; j < k; ++j){
-          printf("B %lld\n", B[j]);
-            printf("A %lld\n", A[i]);
-            i = bstree_lookup(tree, B[j]);
+
+    }
+    i = 0;
+    for (j = 0; j < k; ++j)
+    {
+
+        i = bstree_lookup(tree, B[j]);
         if (i != -1)
         {
-          
+
             free(tree);
-            return j*m-i;
-            //return i*m-j;
+            return (j+1) * m - i;
+            // return (i+1)*m-j+1;
         }
     }
     return 0;
 }
+ //  long long int p = getPrimeRand();
+
+    // long long int g = getRnadg(p);
+
+    // long long int xa = getRand(1000), xb = getRand(1000);
+
+    // printf("xa = %lld, xb = %lld\n", xa, xb);
+    // long long int ya = getMyOpenKey(p, g, xa), yb = getMyOpenKey(p, g, xb);
+    // printf("Ya = %lld, Yb = %lld\n", ya, yb);
+    // long long int zab = getSharSecKey(p, yb, xa), zba = getSharSecKey(p, ya, xb);
+    // printf("Zab = %lld, Zba = %lld\n", zab, zba);
+
+    //  genDiffieHellman(p, g, xa, xb);

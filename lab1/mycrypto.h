@@ -28,5 +28,5 @@ long long int getRnadg(long long int p);
 long long int getMyOpenKey(long long int p, long long int g, long long int mysecretKey);
 long long int getSharSecKey(long long int p, long long int openKey, long long int mysecretKey);
 long long int genDiffieHellman(long long int p, long long int g, long long int Xa, long long int Xb);
-long long int babygiantStep(int a, int p, int y);
+long long int babygiantStep(long long int a, long long int p, long long int y);
 
