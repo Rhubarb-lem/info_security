@@ -1,31 +1,54 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "lab1/mycrypto.h"
+#include "libs/mycrypto.h"
+#include "libs/myciphers.h"
 
 int main()
 {
-   // printf("%lld\n", fastExp(227, 223, 1819));
-    //long long int y = fastExp(5, 16, 23);
-    //printf("my %lld\n", y);
-    //printf("%lld\n", babygiantStep(2, 23, 9));
+    // printf("%lld\n", fastExp(227, 223, 1819));
+    // long long int y = fastExp(5, 16, 23);
+    // printf("my %lld\n", y);
+    // printf("%lld\n", babygiantStep(2, 23, 9));
     // printf("lib %d\n", (int)pow(5, 20) % 7);
     // printf("%lld\n", genEuclid(257, 1298));
     // DiffieHellman
-     //long long int p = getPrimeRand();
-     long long int p = 30803;
+    // long long int p = getPrimeRand();
+    //  long long int p = 30803;
 
-    //long long int g = getRnadg(p);
-    long long int g = 2;
+    // //long long int g = getRnadg(p);
+    // long long int g = 2;
 
-    long long int xa = getRand(1000), xb = getRand(1000);
+    // long long int xa = getRand(1000), xb = getRand(1000);
 
-    printf("xa = %lld, xb = %lld\n", xa, xb);
-    long long int ya = getMyOpenKey(p, g, xa), yb = getMyOpenKey(p, g, xb);
-    printf("Ya = %lld, Yb = %lld\n", ya, yb);
-    long long int zab = getSharSecKey(p, yb, xa), zba = getSharSecKey(p, ya, xb);
-    printf("Zab = %lld, Zba = %lld\n", zab, zba);
+    // printf("xa = %lld, xb = %lld\n", xa, xb);
+    // long long int ya = getMyOpenKey(p, g, xa), yb = getMyOpenKey(p, g, xb);
+    // printf("Ya = %lld, Yb = %lld\n", ya, yb);
+    // long long int zab = getSharSecKey(p, yb, xa), zba = getSharSecKey(p, ya, xb);
+    // printf("Zab = %lld, Zba = %lld\n", zab, zba);
 
     //  genDiffieHellman(p, g, xa, xb);
+    // Эль Гамаль
+    long long int P;
+    long long int g;
+    // Пользователь А генерирует P и g и "передает" их пользователю B
+    ElgamalGenPG(&P, &g);
+    // Пользователь А генерирует свой закрытый и открытый ключ. Передает открытый ключ B
+    long long int Ca;
+    long long int Da;
+    ElgamalGenKeys(&Ca, &Da, P, g);
+    // Пользователь B генерирует свой закрытый и открытый ключи. Передает открытый ключ A
+    long long int Cb;
+    long long int Db;
+    ElgamalGenKeys(&Cb, &Db, P, g);
+    // Пользователь A зашифровыает сообщение и предает его вместе с числом r
+    char m = 15;
+    long long int r;
+    char e = ElgamalEncryptMessage(Db, P, g, m, &r);
+    // Пользователь B расшифровывает сообщение
+    char dm = ElgamalDecryptMessage(Cb, P, e, r);
+    printf("Расшифрованное сообщение %d\n", dm);
+
+    // ElgamalDecryptMessage(1, 2, 3, 4);
     return 0;
 }

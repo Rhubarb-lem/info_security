@@ -76,7 +76,7 @@ long long int fastExp(long long int base, long long int exp, long long int mod)
     {
         if (remain_prev == 1)
         {
-            remain == 1;
+            remain = 1;
         }
         else
         {
@@ -86,14 +86,14 @@ long long int fastExp(long long int base, long long int exp, long long int mod)
             break;
         if ((exp >> i) & 1)
         {
-            res *= remain ;
+            res = (res * remain) % mod;
         }
 
         remain_prev = remain;
     }
 
     return res % mod;
-};
+}
 long long int genEuclid(long long int a, long long int b)
 {
     long long int u[3], v[3], T[3];
@@ -122,7 +122,7 @@ long long int genEuclid(long long int a, long long int b)
     T[1] = u[1] - q * v[1];
     T[2] = u[2] - q * v[2];
 
-    while (T[0] != 0)
+    while (T[0] != 1)
     {
 
         u[0] = v[0];
@@ -141,7 +141,7 @@ long long int genEuclid(long long int a, long long int b)
         T[2] = u[2] - q * v[2];
     }
     // printf("%d\n", T[0]);
-     printf("%lld  %lld\n",  T[1] , T[2]);
+    printf("%lld  %lld\n", T[1], T[2]);
     return T[0];
 }
 long long int getRand(unsigned int order)
@@ -174,7 +174,7 @@ long long int getPrimeRand()
     long int flag = 0;
     while (flag == 0)
     {
-        randP = getRand(1000000);
+        randP = getRand(10000);
         flag = FermaCheck(randP);
     }
     return randP;
@@ -248,7 +248,7 @@ long long int genDiffieHellman(long long int p, long long int g, long long int X
     return Zab;
 }
 
-long long int babygiantStep(long long int a, long long int p, long long int y )
+long long int babygiantStep(long long int a, long long int p, long long int y)
 {
 
     long long int m, k = sqrt(p) + 1;
@@ -257,7 +257,7 @@ long long int babygiantStep(long long int a, long long int p, long long int y )
     for (int i = 1; i < k; i++)
     {
         A[i] = (y % p * fastExp(a, i, p)) % p;
-        B[i] = fastExp(a, m * (i), p);  
+        B[i] = fastExp(a, m * (i), p);
     }
     int i = 0, j = 0;
     bst *tree = bstree_create(A[i], i);
@@ -265,7 +265,6 @@ long long int babygiantStep(long long int a, long long int p, long long int y )
     for (i = 0; i < m; ++i)
     {
         bstree_add(tree, A[i], i);
-
     }
     i = 0;
     for (j = 0; j < k; ++j)
@@ -276,22 +275,22 @@ long long int babygiantStep(long long int a, long long int p, long long int y )
         {
 
             free(tree);
-            return (j+1) * m - i;
+            return (j + 1) * m - i;
             // return (i+1)*m-j+1;
         }
     }
     return 0;
 }
- //  long long int p = getPrimeRand();
+//  long long int p = getPrimeRand();
 
-    // long long int g = getRnadg(p);
+// long long int g = getRnadg(p);
 
-    // long long int xa = getRand(1000), xb = getRand(1000);
+// long long int xa = getRand(1000), xb = getRand(1000);
 
-    // printf("xa = %lld, xb = %lld\n", xa, xb);
-    // long long int ya = getMyOpenKey(p, g, xa), yb = getMyOpenKey(p, g, xb);
-    // printf("Ya = %lld, Yb = %lld\n", ya, yb);
-    // long long int zab = getSharSecKey(p, yb, xa), zba = getSharSecKey(p, ya, xb);
-    // printf("Zab = %lld, Zba = %lld\n", zab, zba);
+// printf("xa = %lld, xb = %lld\n", xa, xb);
+// long long int ya = getMyOpenKey(p, g, xa), yb = getMyOpenKey(p, g, xb);
+// printf("Ya = %lld, Yb = %lld\n", ya, yb);
+// long long int zab = getSharSecKey(p, yb, xa), zba = getSharSecKey(p, ya, xb);
+// printf("Zab = %lld, Zba = %lld\n", zab, zba);
 
-    //  genDiffieHellman(p, g, xa, xb);
+//  genDiffieHellman(p, g, xa, xb);
