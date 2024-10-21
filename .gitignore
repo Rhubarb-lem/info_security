@@ -1,3 +1,7 @@
 main
 *.o
 *.a
+*.jpg
+*.png
+.vscode
+keyfile

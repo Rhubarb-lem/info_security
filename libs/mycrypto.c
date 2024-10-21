@@ -116,14 +116,14 @@ long long int genEuclid(long long int a, long long int b)
         v[1] = 1;
         v[2] = 0;
     }
-    q = u[0] / v[0];
 
-    T[0] = u[0] - q * v[0];
-    T[1] = u[1] - q * v[1];
-    T[2] = u[2] - q * v[2];
-
-    while (T[0] != 1)
+    do
     {
+        // if (v[0] == 0) break; // добавьте проверку
+        q = u[0] / v[0];
+        T[0] = u[0] - q * v[0];
+        T[1] = u[1] - q * v[1];
+        T[2] = u[2] - q * v[2];
 
         u[0] = v[0];
         u[1] = v[1];
@@ -132,17 +132,12 @@ long long int genEuclid(long long int a, long long int b)
         v[0] = T[0];
         v[1] = T[1];
         v[2] = T[2];
+        printf("%lld -  %lld\n", u[0], v[0]);
 
-        q = u[0] / v[0];
-        if (u[0] - q * v[0] == 0)
-            break;
-        T[0] = u[0] - q * v[0];
-        T[1] = u[1] - q * v[1];
-        T[2] = u[2] - q * v[2];
-    }
-    // printf("%d\n", T[0]);
-    printf("%lld  %lld\n", T[1], T[2]);
-    return T[0];
+    } while (v[0] != 0);
+
+    printf("----\n");
+    return u[0]; // изменено
 }
 long long int getRand(unsigned int order)
 {
@@ -157,8 +152,8 @@ int FermaCheck(long long int p)
         return 1;
     for (int i = 0; i < 100; i++)
     {
-
-        long long a = getRand(p - 2) + 2;
+        printf("##########################################\n");
+        long long a = getRand(p - 2) + 1;
         if (genEuclid(a, p) != 1)
             return 0;
 
@@ -169,12 +164,12 @@ int FermaCheck(long long int p)
 }
 long long int getPrimeRand()
 {
-    srand(time(0));
+    // srand(time(0));
     long long int randP;
     long int flag = 0;
     while (flag == 0)
     {
-        randP = getRand(10000);
+        randP = getRand(100000);
         flag = FermaCheck(randP);
     }
     return randP;
@@ -281,16 +276,37 @@ long long int babygiantStep(long long int a, long long int p, long long int y)
     }
     return 0;
 }
-//  long long int p = getPrimeRand();
+long long int gcdExtended(long long int a, long long int b, long long int *x, long long int *y)
+{
+    if (a == 0)
+    {
+        *x = 0;
+        *y = 1;
+        return b;
+    }
 
-// long long int g = getRnadg(p);
+    long long int x1, y1;
+    long long int gcd = gcdExtended(b % a, a, &x1, &y1);
 
-// long long int xa = getRand(1000), xb = getRand(1000);
+    *x = y1 - (b / a) * x1;
+    *y = x1;
 
-// printf("xa = %lld, xb = %lld\n", xa, xb);
-// long long int ya = getMyOpenKey(p, g, xa), yb = getMyOpenKey(p, g, xb);
-// printf("Ya = %lld, Yb = %lld\n", ya, yb);
-// long long int zab = getSharSecKey(p, yb, xa), zba = getSharSecKey(p, ya, xb);
-// printf("Zab = %lld, Zba = %lld\n", zab, zba);
+    return gcd;
+}
 
-//  genDiffieHellman(p, g, xa, xb);
+long long int modInverse(long long int d, long long int phi)
+{
+    long long int x, y;
+    long long int g = gcdExtended(d, phi, &x, &y);
+    if (g != 1)
+    {
+        printf("Обратное значение не существует.\n");
+        return -1;
+    }
+    else
+    {
+
+        long long int result = (x % phi + phi) % phi;
+        return result;
+    }
+}
