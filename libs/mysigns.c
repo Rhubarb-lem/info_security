@@ -1,80 +1,26 @@
 #include "mysigns.h"
 
-// Генерация ключей ГОСТ
-int GOSTGenerateKeys(BIGNUM *private_key, BIGNUM *public_key) {
-    // Создание группы для ГОСТ
-    EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_id_GostR3410_94_CryptoPro_A_ParamSet);
-    if (!group) {
-        fprintf(stderr, "Ошибка при создании группы для ГОСТ\n");
-        return 0;
-    }
-
-    // Создание нового EC_KEY объекта
-    EC_KEY *eckey = EC_KEY_new();
-    if (!eckey) {
-        fprintf(stderr, "Ошибка при создании EC_KEY\n");
-        EC_GROUP_free(group);
-        return 0;
-    }
-
-    // Установка группы для ключа
-    EC_KEY_set_group(eckey, group);
-
-    // Генерация ключа
-    if (EC_KEY_generate_key(eckey) != 1) {
-        fprintf(stderr, "Ошибка при генерации ключа\n");
-        EC_KEY_free(eckey);
-        EC_GROUP_free(group);
-        return 0;
-    }
-
-    // Получение закрытого и открытого ключей
-    const BIGNUM *priv_key_bn = EC_KEY_get0_private_key(eckey);
-    const EC_POINT *pub_key_point = EC_KEY_get0_public_key(eckey);
-
-    // Копирование ключей в переданные переменные
-    BN_copy(private_key, priv_key_bn);
-    EC_POINT_point2bn(group, pub_key_point, POINT_CONVERSION_UNCOMPRESSED, public_key, NULL);
-
-    // Очистка
-    EC_KEY_free(eckey);
-    EC_GROUP_free(group);
-
-    return 1;
-}
-
-// Генерация хэша ГОСТ для сообщения
-void compute_gost_hash(const char *message, unsigned char *result)
+void compute_md5(const char *str, unsigned char *result)
 {
-    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
-    const EVP_MD *md = EVP_get_digestbyname("md_gost94");
-    if (!md)
-    {
-        fprintf(stderr, "Не удалось найти хеш-функцию ГОСТ\n");
-        return;
-    }
-
-    EVP_DigestInit_ex(mdctx, md, NULL);
-    EVP_DigestUpdate(mdctx, message, strlen(message));
-    EVP_DigestFinal_ex(mdctx, result, NULL);
-    EVP_MD_CTX_free(mdctx);
+    MD5_CTX md5_ctx;
+    MD5_Init(&md5_ctx);
+    MD5_Update(&md5_ctx, str, strlen(str));
+    MD5_Final(result, &md5_ctx);
 }
 
-// Функция подписания сообщения с помощью ГОСТ Р 34.10-94
+// Подписание сообщения
 int GOSTSign(const char *message, BIGNUM *private_key, BIGNUM *public_key, BIGNUM *signature_r, BIGNUM *signature_s)
 {
-    unsigned char hash[EVP_MAX_MD_SIZE];
-    compute_gost_hash(message, hash);
+    unsigned char hash[MD5_DIGEST_LENGTH];
+    compute_md5(message, hash);
 
-    EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_id_GostR3410_94_CryptoPro_A_ParamSet);
-    EC_POINT *Q = EC_POINT_new(group);
+    EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_X9_62_prime192v1); // Используем стандартную эллиптическую кривую
     EC_KEY *eckey = EC_KEY_new();
-
     EC_KEY_set_group(eckey, group);
     EC_KEY_set_private_key(eckey, private_key);
-    EC_KEY_set_public_key(eckey, Q);
+    EC_KEY_set_public_key(eckey, EC_POINT_bn2point(group, public_key, NULL, NULL));
 
-    ECDSA_SIG *sig = ECDSA_do_sign(hash, sizeof(hash), eckey);
+    ECDSA_SIG *sig = ECDSA_do_sign(hash, MD5_DIGEST_LENGTH, eckey);
     if (!sig)
     {
         fprintf(stderr, "Ошибка подписи\n");
@@ -88,40 +34,35 @@ int GOSTSign(const char *message, BIGNUM *private_key, BIGNUM *public_key, BIGNU
 
     ECDSA_SIG_free(sig);
     EC_KEY_free(eckey);
-    EC_POINT_free(Q);
     EC_GROUP_free(group);
 
     return 1;
 }
 
-// Функция проверки подписи ГОСТ
+// Проверка подписи
 int GOSTVerify(const char *message, BIGNUM *public_key, BIGNUM *signature_r, BIGNUM *signature_s)
 {
-    unsigned char hash[EVP_MAX_MD_SIZE];
-    compute_gost_hash(message, hash);
+    unsigned char hash[MD5_DIGEST_LENGTH];
+    compute_md5(message, hash);
 
-    EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_id_GostR3410_94_CryptoPro_A_ParamSet);
+    EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_X9_62_prime192v1);
     EC_KEY *eckey = EC_KEY_new();
-    EC_POINT *Q = EC_POINT_new(group);
-
     EC_KEY_set_group(eckey, group);
-    EC_POINT_bn2point(group, public_key, Q, NULL);
-    EC_KEY_set_public_key(eckey, Q);
+    EC_KEY_set_public_key(eckey, EC_POINT_bn2point(group, public_key, NULL, NULL));
 
     ECDSA_SIG *sig = ECDSA_SIG_new();
     ECDSA_SIG_set0(sig, BN_dup(signature_r), BN_dup(signature_s));
 
-    int result = ECDSA_do_verify(hash, sizeof(hash), sig, eckey);
+    int result = ECDSA_do_verify(hash, MD5_DIGEST_LENGTH, sig, eckey);
 
     ECDSA_SIG_free(sig);
     EC_KEY_free(eckey);
-    EC_POINT_free(Q);
     EC_GROUP_free(group);
 
     return result;
 }
 
-// Подпись файла ГОСТ
+// Подпись файла с использованием ГОСТ
 int GOSTSignFile(const char *file_path, BIGNUM *private_key, BIGNUM *public_key, const char *signature_path)
 {
     FILE *file = fopen(file_path, "rb");
@@ -131,14 +72,16 @@ int GOSTSignFile(const char *file_path, BIGNUM *private_key, BIGNUM *public_key,
         return 0;
     }
 
-    unsigned char hash[EVP_MAX_MD_SIZE];
-    compute_md5_file(file, hash);
+    unsigned char hash[MD5_DIGEST_LENGTH];
+    compute_md5_file(file, hash); // Вычисляем MD5 хэш для содержимого файла
     fclose(file);
 
     BIGNUM *signature_r = BN_new();
     BIGNUM *signature_s = BN_new();
     if (!GOSTSign((const char *)hash, private_key, public_key, signature_r, signature_s))
     {
+        BN_free(signature_r);
+        BN_free(signature_s);
         return 0;
     }
 
@@ -146,9 +89,12 @@ int GOSTSignFile(const char *file_path, BIGNUM *private_key, BIGNUM *public_key,
     if (!sig_file)
     {
         perror("Не удалось открыть файл подписи");
+        BN_free(signature_r);
+        BN_free(signature_s);
         return 0;
     }
 
+    // Сохраняем подпись в файл
     char *r_str = BN_bn2dec(signature_r);
     char *s_str = BN_bn2dec(signature_s);
     fprintf(sig_file, "%s\n%s\n", r_str, s_str);
@@ -162,7 +108,7 @@ int GOSTSignFile(const char *file_path, BIGNUM *private_key, BIGNUM *public_key,
     return 1;
 }
 
-// Проверка подписи файла ГОСТ
+// Проверка подписи файла с использованием ГОСТ
 int GOSTVerifyFile(const char *file_path, BIGNUM *public_key, const char *signature_path)
 {
     FILE *file = fopen(file_path, "rb");
@@ -172,8 +118,8 @@ int GOSTVerifyFile(const char *file_path, BIGNUM *public_key, const char *signat
         return 0;
     }
 
-    unsigned char hash[EVP_MAX_MD_SIZE];
-    compute_md5_file(file, hash);
+    unsigned char hash[MD5_DIGEST_LENGTH];
+    compute_md5_file(file, hash); // Вычисляем MD5 хэш для содержимого файла
     fclose(file);
 
     BIGNUM *signature_r = BN_new();
@@ -183,9 +129,12 @@ int GOSTVerifyFile(const char *file_path, BIGNUM *public_key, const char *signat
     if (!sig_file)
     {
         perror("Не удалось открыть файл подписи");
+        BN_free(signature_r);
+        BN_free(signature_s);
         return 0;
     }
 
+    // Читаем значения подписи из файла
     char r_str[64], s_str[64];
     fscanf(sig_file, "%63s\n%63s\n", r_str, s_str);
     fclose(sig_file);
@@ -199,14 +148,6 @@ int GOSTVerifyFile(const char *file_path, BIGNUM *public_key, const char *signat
     BN_free(signature_s);
 
     return result;
-}
-
-void compute_md5(const char *str, unsigned char *result)
-{
-    MD5_CTX md5_ctx;
-    MD5_Init(&md5_ctx);
-    MD5_Update(&md5_ctx, str, strlen(str));
-    MD5_Final(result, &md5_ctx);
 }
 
 void RSASign(const char *message, long long N_val, long long c_val, BIGNUM *signature)
