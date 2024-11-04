@@ -24,7 +24,6 @@ int ElgamalSignFile(const char *file_path, long long X_val, long long P_val, lon
 int ElgamalCheckFileSignature(const char *file_path, long long Y_val, long long P_val, long long G_val, const char *signature_file) ;
 
 int GOSTSign(const char *message, BIGNUM *private_key, BIGNUM *public_key, BIGNUM *signature_r, BIGNUM *signature_s);
-int GOSTVerify(const char *message, BIGNUM *public_key, BIGNUM *signature_r, BIGNUM *signature_s);
 int GOSTSignFile(const char *file_path, BIGNUM *private_key, BIGNUM *public_key, const char *signature_path);
+int GOSTVerify(const char *message, BIGNUM *public_key, BIGNUM *signature_r, BIGNUM *signature_s);
 int GOSTVerifyFile(const char *file_path, BIGNUM *public_key, const char *signature_path);
-int GOSTGenerateKeys(BIGNUM *private_key, BIGNUM *public_key);
