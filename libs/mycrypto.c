@@ -132,11 +132,11 @@ long long int genEuclid(long long int a, long long int b)
         v[0] = T[0];
         v[1] = T[1];
         v[2] = T[2];
-        printf("%lld -  %lld\n", u[0], v[0]);
+        //printf("%lld -  %lld\n", u[0], v[0]);
 
     } while (v[0] != 0);
 
-    printf("----\n");
+    //printf("----\n");
     return u[0]; // изменено
 }
 long long int getRand(unsigned int order)
@@ -152,7 +152,7 @@ int FermaCheck(long long int p)
         return 1;
     for (int i = 0; i < 100; i++)
     {
-        printf("##########################################\n");
+        //printf("##########################################\n");
         long long a = getRand(p - 2) + 1;
         if (genEuclid(a, p) != 1)
             return 0;
@@ -198,7 +198,7 @@ long long int getMyOpenKey(long long int p, long long int g, long long int mysec
         printf("Error: wrong system parametrs!\n");
         return -1;
     }
-    printf("key - %lld, g - %lld, p %lld", mysecretKey, p, g);
+    //printf("key - %lld, g - %lld, p %lld", mysecretKey, p, g);
     long long int myopenKey = fastExp(g, mysecretKey, p);
     return myopenKey;
 }
@@ -239,7 +239,7 @@ long long int genDiffieHellman(long long int p, long long int g, long long int X
         printf("Error: wrong shared secret key calculation!\n");
         return -1;
     }
-    printf("%lld\n", Zab);
+    //printf("%lld\n", Zab);
     return Zab;
 }
 
