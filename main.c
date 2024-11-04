@@ -5,6 +5,29 @@
 #include "libs/myciphers.h"
 #include "libs/mysigns.h"
 
+void GenerateKeys(BIGNUM **private_key, BIGNUM **public_key)
+{
+  EC_KEY *eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1); // используем стандартную кривую
+
+  // Генерация ключей
+  if (!EC_KEY_generate_key(eckey))
+  {
+    fprintf(stderr, "Ошибка при генерации ключей.\n");
+    return;
+  }
+
+  // Извлечение закрытого и открытого ключей
+  const BIGNUM *priv = EC_KEY_get0_private_key(eckey);
+  const EC_POINT *pub = EC_KEY_get0_public_key(eckey);
+  const EC_GROUP *group = EC_KEY_get0_group(eckey);
+
+  *private_key = BN_dup(priv);
+  *public_key = BN_new();
+  EC_POINT_point2bn(group, pub, POINT_CONVERSION_UNCOMPRESSED, *public_key, NULL);
+
+  EC_KEY_free(eckey);
+}
+
 int main()
 {
 
@@ -107,44 +130,45 @@ int main()
   // int check2 = ElgamalCheckFileSignature("message3.jpg", y, P, G, "signmessage3");
 
   //  printf("Check result: %d\n", check2);
-  const char *message = "Test message for GOST signature";
+  // Функция для генерации ключей на эллиптической кривой
 
-  // Создание переменных для ключей и подписи
   BIGNUM *private_key = BN_new();
   BIGNUM *public_key = BN_new();
-  BIGNUM *signature_r = BN_new();
-  BIGNUM *signature_s = BN_new();
 
   // Генерация ключей
-  if (GOSTGenerateKeys(private_key, public_key) != 0)
+  GenerateKeys(&private_key, &public_key);
+  if (!private_key || !public_key)
   {
-    fprintf(stderr, "Ошибка при генерации ключей.\n");
+    fprintf(stderr, "Ошибка при создании ключей.\n");
     return 1;
   }
 
-  // Подписание сообщения
-  if (GOSTSign(message, private_key, public_key, signature_r, signature_s) != 0)
+  // Подписание файла
+  const char *file_path = "testfile.txt";
+  const char *signature_path = "signature.sig";
+  if (GOSTSignFile(file_path, private_key, public_key, signature_path))
   {
-    fprintf(stderr, "Ошибка при подписании сообщения.\n");
-    return 1;
-  }
-  printf("Подпись успешно создана.\n");
-
-  // Проверка подписи
-  if (GOSTVerify(message, public_key, signature_r, signature_s) == 1)
-  {
-    printf("Подпись успешно проверена и подтверждена.\n");
+    printf("Файл успешно подписан и сохранен в %s\n", signature_path);
   }
   else
   {
-    printf("Ошибка проверки подписи.\n");
+    fprintf(stderr, "Ошибка при подписании файла.\n");
+    return 1;
+  }
+
+  // Проверка подписи
+  int verify = GOSTVerifyFile(file_path, public_key, signature_path);
+  if (verify)
+  {
+    printf("Проверка подписи успешна: подпись верна.\n");
+  }
+  else
+  {
+    printf("Проверка подписи неуспешна: подпись неверна.\n");
   }
 
   // Очистка памяти
   BN_free(private_key);
   BN_free(public_key);
-  BN_free(signature_r);
-  BN_free(signature_s);
-
   return 0;
 }
