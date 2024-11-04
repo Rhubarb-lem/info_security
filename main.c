@@ -95,18 +95,56 @@ int main()
   // int check = RSASigncheckFile("message2.jpg", N, D, "signmessage2");
   //  printf("Check result: %d\n", check);
   /////////////////////////////////////////////////////////////////
-  long long P, G;
-  ElgamalGenPG(&P, &G);
+  // long long P, G;
+  // ElgamalGenPG(&P, &G);
 
-  long long x, y, r;
-  ElgamalGenKeys(&x, &y, P, G);
-  long long s;
-  // ElgamalSign("Hello!", x, P, G, &r, &s);
-  // int check2 = ElgamalcheckSign("Hello!", y, P, G, r, s);
-  ElgamalSignFile("message3.jpg", x, P, G, "signmessage3");
-  int check2 = ElgamalCheckFileSignature("message3.jpg", y, P, G, "signmessage3");
+  // long long x, y, r;
+  // ElgamalGenKeys(&x, &y, P, G);
+  // long long s;
+  // // ElgamalSign("Hello!", x, P, G, &r, &s);
+  // // int check2 = ElgamalcheckSign("Hello!", y, P, G, r, s);
+  // ElgamalSignFile("message3.jpg", x, P, G, "signmessage3");
+  // int check2 = ElgamalCheckFileSignature("message3.jpg", y, P, G, "signmessage3");
 
-   printf("Check result: %d\n", check2);
+  //  printf("Check result: %d\n", check2);
+  const char *message = "Test message for GOST signature";
+
+  // Создание переменных для ключей и подписи
+  BIGNUM *private_key = BN_new();
+  BIGNUM *public_key = BN_new();
+  BIGNUM *signature_r = BN_new();
+  BIGNUM *signature_s = BN_new();
+
+  // Генерация ключей
+  if (GOSTGenerateKeys(private_key, public_key) != 0)
+  {
+    fprintf(stderr, "Ошибка при генерации ключей.\n");
+    return 1;
+  }
+
+  // Подписание сообщения
+  if (GOSTSign(message, private_key, public_key, signature_r, signature_s) != 0)
+  {
+    fprintf(stderr, "Ошибка при подписании сообщения.\n");
+    return 1;
+  }
+  printf("Подпись успешно создана.\n");
+
+  // Проверка подписи
+  if (GOSTVerify(message, public_key, signature_r, signature_s) == 1)
+  {
+    printf("Подпись успешно проверена и подтверждена.\n");
+  }
+  else
+  {
+    printf("Ошибка проверки подписи.\n");
+  }
+
+  // Очистка памяти
+  BN_free(private_key);
+  BN_free(public_key);
+  BN_free(signature_r);
+  BN_free(signature_s);
 
   return 0;
 }
