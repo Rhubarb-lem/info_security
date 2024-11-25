@@ -4,6 +4,10 @@
 #include "libs/mycrypto.h"
 #include "libs/myciphers.h"
 #include "libs/mysigns.h"
+#include "libs/mpoker.h"
+#define DECKSIZE 52
+#define CARDS_PER_PLAYER 2
+#define NUMPLAYERS 20
 
 int main()
 {
@@ -95,18 +99,112 @@ int main()
   // int check = RSASigncheckFile("message2.jpg", N, D, "signmessage2");
   //  printf("Check result: %d\n", check);
   /////////////////////////////////////////////////////////////////
-  long long P, G;
-  ElgamalGenPG(&P, &G);
+  // long long P, G;
+  // ElgamalGenPG(&P, &G);
 
-  long long x, y, r;
-  ElgamalGenKeys(&x, &y, P, G);
-  long long s;
-  // ElgamalSign("Hello!", x, P, G, &r, &s);
-  // int check2 = ElgamalcheckSign("Hello!", y, P, G, r, s);
-  ElgamalSignFile("message3.jpg", x, P, G, "signmessage3");
-  int check2 = ElgamalCheckFileSignature("message3.jpg", y, P, G, "signmessage3");
+  // long long x, y, r;
+  // ElgamalGenKeys(&x, &y, P, G);
+  // long long s;
+  // // ElgamalSign("Hello!", x, P, G, &r, &s);
+  // // int check2 = ElgamalcheckSign("Hello!", y, P, G, r, s);
+  // ElgamalSignFile("message3.jpg", x, P, G, "signmessage3");
+  // int check2 = ElgamalCheckFileSignature("message3.jpg", y, P, G, "signmessage3");
 
-   printf("Check result: %d\n", check2);
+  //  printf("Check result: %d\n", check2);
+  // printf("♠\n");
+  //   int deck[52];
+  //   initDeck(deck);
+  //   for (int i = 0; i < 52; i++)
+  //   {
+  //     printf("%d\n", deck[i]);
+  //   }
+  //   printf("============\n");
+  //   shuffleDeck(deck);
+  //   for (int i = 0; i < 52; i++)
+  //   {
+  //     printf("%d\n", deck[i]);
+  //   }
+  //   // Генерируем параметры системы
+  //   long long int p = getPrimeRand();
+  //   long long int ca, da, cb, db;
+  //   // Алиса генерирует ключи
+  //   PokergenKeys(p, &ca, &da);
+  //   // Боб генерирует ключи
+  //   PokergenKeys(p, &cb, &db);
+  //   // Алиса выбирает три случайных карты и сопоставляет им три случайных числа
+  //   long long int a[2], b[2], g[2];
+  //   printf("aaaaaaaaaaaaa\n");
+  //   mapCards(a, b, g, deck, p); // мапить всю колоду
+
+  //   printf("%lld - %lld\n", a[0], a[1]);
+  //   printf("%lld - %lld\n", b[0], b[1]);
+  //   printf("%lld - %lld\n", g[0], g[1]);
+  //   // Алиса шифрует карты, перемешивает их и отправляет Бобу
+  //   long long int u[3];
+  //   encryptThreeCards(u, a[1], b[1], g[1], ca, p);
+  //   // Боб выбирает случайную карту и отправляет ее Алисе. Алиса ее расшифовывает
+  //  // long long int A_card = fastExp(getrandEnCard(u), da, p); // decryptOneCard
+  //   long long int A_card = decryptOneCard(getrandEnCard(u), da, p); // decryptOneCard
+  //   printf("Карта Алисы - %lld\n", A_card);
+  //   // Боб шифрует две оставшиеся карты, возможно перемешивает их и отправляет Алисе
+  //   encryptTwoCards(u, cb, p);
+  //   // Алиса выбирает случайную карту, шифрует ее и отправляет Бобу
+  //   long long int w = encryptOneCard(u, da, p);
+  //   // Боб расшифровывает карту
+  //   long long int B_card = decryptOneCard(w, da, p);
+  //   printf("Карта Боба - %lld\n", B_card);
+  //////////////////////////////////////////////////////////
+
+  long long int deck[DECK_SIZE], edeck[DECK_SIZE];
+  long long int P = getPrimeRand();
+  initEDeck(deck, P);
+  for (int i = 0; i < DECK_SIZE; i++)
+  {
+    edeck[i] = deck[i];
+  }
+  long long int c[NUMPLAYERS], d[NUMPLAYERS];
+  long long int pcards[NUMPLAYERS][2];
+
+  for (int i = 0; i < NUMPLAYERS; i++)
+  {
+    PokergenKeys(P, &c[i], &d[i]);
+  }
+  erencryptAllPlayer(edeck, c, NUMPLAYERS, P);
+  for (int i = 0; i < NUMPLAYERS; i++)
+  {
+    pcards[i][0] = edeck[i];
+    edeck[i] = -1;
+    pcards[i][1] = edeck[DECK_SIZE - i - 1];
+    edeck[DECK_SIZE - i] = -1;
+  }
+  for (int i = 0; i < NUMPLAYERS; i++)
+  {
+    pcards[i][0] = decryptCardAllPlayers(pcards[i][0], d, P, NUMPLAYERS);
+    // printf("%d\n", pcards[i][0]);
+    pcards[i][1] = decryptCardAllPlayers(pcards[i][1], d, P, NUMPLAYERS);
+  }
+  long long int discards[2];
+  setlocale(LC_ALL, "");
+  for (int i = 0; i < NUMPLAYERS; i++)
+  {
+    wprintf(L"Player %d cards:\n", i);
+    // printf("Player %d cards:\n", i);
+    pcards[i][0] = searchCard(pcards[i][0], deck);
+    
+    pcards[i][1] = searchCard(pcards[i][1], deck);
+    
+    discards[0] = pcards[i][0];
+    discards[1] = pcards[i][1];
+    wprintf(L"%lld\n", discards[0]);
+    wprintf(L"%lld\n", discards[1]);
+    displayCardsInRow(discards, 2);
+  }
+  shufflellDeck(deck, 52);
+  long long int table[5];
+  dealTable(table, deck);
+
+  wprintf(L"Table:\n");
+  displayCardsInRow(table, 5);
 
   return 0;
 }
