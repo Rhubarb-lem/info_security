@@ -169,7 +169,7 @@ long long int getPrimeRand()
     long int flag = 0;
     while (flag == 0)
     {
-        randP = getRand(100000);
+        randP = getRand(100000000);
         flag = FermaCheck(randP);
     }
     return randP;

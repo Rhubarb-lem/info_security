@@ -5,6 +5,8 @@
 #include "libs/myciphers.h"
 #include "libs/mysigns.h"
 #include "libs/mpoker.h"
+#include "libs/myvote.h"
+
 #define DECKSIZE 52
 #define CARDS_PER_PLAYER 2
 #define NUMPLAYERS 20
@@ -155,56 +157,108 @@ int main()
   //   printf("Карта Боба - %lld\n", B_card);
   //////////////////////////////////////////////////////////
 
-  long long int deck[DECK_SIZE], edeck[DECK_SIZE];
-  long long int P = getPrimeRand();
-  initEDeck(deck, P);
-  for (int i = 0; i < DECK_SIZE; i++)
-  {
-    edeck[i] = deck[i];
-  }
-  long long int c[NUMPLAYERS], d[NUMPLAYERS];
-  long long int pcards[NUMPLAYERS][2];
+  // long long int deck[DECK_SIZE], edeck[DECK_SIZE];
+  // long long int P = getPrimeRand();
+  // initEDeck(deck, P);
+  // for (int i = 0; i < DECK_SIZE; i++)
+  // {
+  //   edeck[i] = deck[i];
+  // }
+  // long long int c[NUMPLAYERS], d[NUMPLAYERS];
+  // long long int pcards[NUMPLAYERS][2];
 
-  for (int i = 0; i < NUMPLAYERS; i++)
-  {
-    PokergenKeys(P, &c[i], &d[i]);
-  }
-  erencryptAllPlayer(edeck, c, NUMPLAYERS, P);
-  for (int i = 0; i < NUMPLAYERS; i++)
-  {
-    pcards[i][0] = edeck[i];
-    edeck[i] = -1;
-    pcards[i][1] = edeck[DECK_SIZE - i - 1];
-    edeck[DECK_SIZE - i] = -1;
-  }
-  for (int i = 0; i < NUMPLAYERS; i++)
-  {
-    pcards[i][0] = decryptCardAllPlayers(pcards[i][0], d, P, NUMPLAYERS);
-    // printf("%d\n", pcards[i][0]);
-    pcards[i][1] = decryptCardAllPlayers(pcards[i][1], d, P, NUMPLAYERS);
-  }
-  long long int discards[2];
-  setlocale(LC_ALL, "");
-  for (int i = 0; i < NUMPLAYERS; i++)
-  {
-    wprintf(L"Player %d cards:\n", i);
-    // printf("Player %d cards:\n", i);
-    pcards[i][0] = searchCard(pcards[i][0], deck);
-    
-    pcards[i][1] = searchCard(pcards[i][1], deck);
-    
-    discards[0] = pcards[i][0];
-    discards[1] = pcards[i][1];
-    wprintf(L"%lld\n", discards[0]);
-    wprintf(L"%lld\n", discards[1]);
-    displayCardsInRow(discards, 2);
-  }
-  shufflellDeck(deck, 52);
-  long long int table[5];
-  dealTable(table, deck);
+  // for (int i = 0; i < NUMPLAYERS; i++)
+  // {
+  //   PokergenKeys(P, &c[i], &d[i]);
+  // }
+  // erencryptAllPlayer(edeck, c, NUMPLAYERS, P);
+  // for (int i = 0; i < NUMPLAYERS; i++)
+  // {
+  //   pcards[i][0] = edeck[i];
+  //   edeck[i] = -1;
+  //   pcards[i][1] = edeck[DECK_SIZE - i - 1];
+  //   edeck[DECK_SIZE - i] = -1;
+  // }
+  // for (int i = 0; i < NUMPLAYERS; i++)
+  // {
+  //   pcards[i][0] = decryptCardAllPlayers(pcards[i][0], d, P, NUMPLAYERS);
+  //   // printf("%d\n", pcards[i][0]);
+  //   pcards[i][1] = decryptCardAllPlayers(pcards[i][1], d, P, NUMPLAYERS);
+  // }
+  // long long int discards[2];
+  // setlocale(LC_ALL, "");
+  // for (int i = 0; i < NUMPLAYERS; i++)
+  // {
+  //   wprintf(L"Player %d cards:\n", i);
+  //   // printf("Player %d cards:\n", i);
+  //   pcards[i][0] = searchCard(pcards[i][0], deck);
 
-  wprintf(L"Table:\n");
-  displayCardsInRow(table, 5);
+  //   pcards[i][1] = searchCard(pcards[i][1], deck);
+
+  //   discards[0] = pcards[i][0];
+  //   discards[1] = pcards[i][1];
+  //   wprintf(L"%lld\n", discards[0]);
+  //   wprintf(L"%lld\n", discards[1]);
+  //   displayCardsInRow(discards, 2);
+  // }
+  // shufflellDeck(deck, 52);
+  // long long int table[5];
+  // dealTable(table, deck);
+
+  // wprintf(L"Table:\n");
+  // displayCardsInRow(table, 5);
+
+  // Алиса голосует
+  long long int v = vote();
+  // Генерируются параметры системы
+  long long int N, C, D;
+  blind_sign_gen_params(&N, &C, &D);
+
+  // Алиса генерирует рандомное число и записывет его вместе со своей информацией в переменную
+  BIGNUM *rnd = generate_random_number(512);
+  char vote_data[10];
+  // char *vote_data = "Alice";
+  strcpy(vote_data, "Alice");
+  BIGNUM *BIGV = create_v_number(vote_data);
+
+  snprintf(vote_data + strlen(vote_data), sizeof(vote_data) - strlen(vote_data), "%lld", v);
+
+  BIGNUM *n = concatenate_numbers(rnd, BIGV, 1024);
+
+  // Алиса вычисляет r
+  long long int r = gen_r(N);
+
+  // Алиса вычисляет хэш n
+  BIGNUM *BIGN = BN_new();
+  BN_set_word(BIGN, N);
+  BIGNUM *H = compute_md5_hash(n, BIGN);
+  BIGNUM *BIGR = BN_new();
+  BN_set_word(BIGR, r);
+  BIGNUM *BIGD = BN_new();
+  BN_set_word(BIGD, D);
+  //Алиса вычисляет H' и отправляет на сервер 
+  BIGNUM *H2 = compute_h2_value(H, BIGR, BIGD, BIGN);
+  BIGNUM *BIGC = BN_new();
+  BN_set_word(BIGC, C);
+  //Сервер вычисляет S'
+  BIGNUM *S2 = compute_s_prime(H2, BIGC, BIGN);
+  //Алиса вычилсяет 
+  BIGNUM *SIGN = compute_signature(S2, BIGR, BIGN);
+
+  int check = verify_ballot(n, SIGN, BIGD, BIGN);
+  printf("Результат проверки - %d\n", check);
+
+  BN_free(rnd);
+  BN_free(n);
+  BN_free(BIGN);
+  BN_free(BIGV);
+  BN_free(BIGR);
+  BN_free(BIGD);
+  BN_free(BIGC);
+  BN_free(H);
+  BN_free(H2);
+  BN_free(S2);
+  BN_free(SIGN);
 
   return 0;
 }

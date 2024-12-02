@@ -1,5 +1,5 @@
-main :  libmycrypto.a libmyciphers.a libmysigns.a libmpoker.a main.c
-	gcc main.c -o main -L. -lmpoker -lmysigns -lssl -lcrypto -lmyciphers -lmycrypto -lm
+main : libmyvote.a libmycrypto.a libmyciphers.a libmysigns.a libmpoker.a main.c
+	gcc main.c -o main -L. -lmyvote -lmpoker -lmysigns -lssl -lcrypto -lmyciphers -lmycrypto -lm
 libmycrypto.a : mycrypto.o
 	ar rc libmycrypto.a mycrypto.o
 mycrypto.o : libs/mycrypto.c
@@ -16,6 +16,11 @@ libmpoker.a : mpoker.o
 	ar rc libmpoker.a mpoker.o
 mpoker.o : libs/mpoker.c libmycrypto.a 
 		gcc libs/mpoker.c  -c -L.  -lmycrypto  -lcrypto
+libmyvote.a : myvote.o
+	ar rc libmyvote.a myvote.o
+myvote.o : libs/myvote.c libmycrypto.a libmyciphers.a libmysigns.a
+		gcc libs/myvote.c  -c -L.  -lmycrypto -lmyciphers -lssl -lmysigns  -lcrypto 
+
 
 run: main
 	./main
