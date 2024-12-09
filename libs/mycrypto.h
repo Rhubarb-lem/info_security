@@ -21,7 +21,7 @@ long long int fastExp(long long int base, long long int exp, long long int mod);
 long long int genEuclid(long long int a, long long int b);
 long long int getRand(unsigned int order);
 int FermaCheck(long long int p);
-long long int getPrimeRand();
+long int getPrimeRand();
 long long int getRnadg(long long int p);
 long long int getMyOpenKey(long long int p, long long int g, long long int mysecretKey);
 long long int getSharSecKey(long long int p, long long int openKey, long long int mysecretKey);
